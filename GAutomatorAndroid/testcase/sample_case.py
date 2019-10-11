@@ -132,7 +132,8 @@ def main():
  #   test_find_elements()
 
 if __name__ == '__main__':
-    main()
-    device.touchDown(0,300,300)
-    time.sleep(3)
-    device.touchUp(0)
+    # main()
+    # device.touchDown(0,300,300)
+    # time.sleep(3)
+    # device.touchUp(0)
+    test()

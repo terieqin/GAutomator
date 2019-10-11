@@ -123,6 +123,13 @@ public class WetestReport {
 		getVersion();
 	}
 
+	/**
+	 * 这里UncaughtExceptionHandler是一个函数式接口（只有一个抽象方法）
+	 * 这里的new并不是实例化这个接口，因为接口不能实例化
+	 * 使用接口的方法是用一个类去继承一个接口，然后重写接口抽象方法，最后实例化类
+	 * 这里的new后面还有一个大括号。其实这里是实例化了一个继承了该接口的匿名类，匿名类内部重写了该接口里的抽象方法
+	 * 如果这里的UncaughtExceptionHandler是一个类，则返回的是一个继承了该类的，并实现（或重写）了一个方法的匿名子类
+	 */
 	private static UncaughtExceptionHandler _uncaughtExceptionHandler = new UncaughtExceptionHandler() {
 
 		@Override
@@ -176,7 +183,7 @@ public class WetestReport {
 			defaultUncaughtExceptionHandler.uncaughtException(thread, ex);
 
 		}
-	};
+	}
 
 	public static void testCrash() {
 
@@ -281,7 +288,7 @@ public class WetestReport {
 
 		sb.append("***************************************************\n");
 
-		// һ��Ҫʹ��Error����ģ������ֻ����Զ����˵�Debug�������־
+		// һ��Ҫʹ��Error����ģ������ֻ����Զ����˵�Debug�������־
 		Log.e(TAG, sb.toString());
 	}
 }

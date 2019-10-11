@@ -108,6 +108,7 @@ def get_engine(engine_type=EngineType, port=None):
     ui_device = uiauto.get_uiautomator()
     if engine_type == "unity":
         get_engine.instance = UnityEngine(hostip, local_port,ui_device)
+        print("In get_engine, hostip is:"+hostip + " local_port is : "+str(local_port))
     elif engine_type == "ue4":
         get_engine.instance=UnRealEngine(hostip,local_port,ui_device)
     else:

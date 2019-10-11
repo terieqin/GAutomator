@@ -105,6 +105,7 @@ class GameEngine(object):
     """
 
     def __init__(self, address, port,uiauto_interface):
+        print("In GameEngine, address is :"+address + " and port is :"+str(port))
         self.address = address
         self.port = port
         self.sdk_version = None
@@ -141,6 +142,7 @@ class GameEngine(object):
         return version
 
     def send_command_with_retry(self,command, param=None , timeout=20):
+        print("send_command_with_retry, command :"+ str(command) +"param :"+ str(param))
         for i in range(0,2):
             try:
                 ret = self.socket.send_command(command, param,timeout)

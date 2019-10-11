@@ -25,6 +25,7 @@ def excute_adb(cmd, serial=None):
         command = "adb -s {0} {1}".format(serial, cmd)
     else:
         command = "adb {0}".format(cmd)
+    print("Excute_adb: "+command)
     file = os.popen(command)
     return file
 
@@ -44,6 +45,7 @@ def excute_adb_process_daemon(cmd, shell=False, serial=None, sleep=3 , needStdou
         command = "adb -s {0} {1}".format(serial, cmd)
     else:
         command = "adb {0}".format(cmd)
+    print("Excute_adb_process_daemon: " + command)
     #print "daemon: {0}".format(command)
     if needStdout is True:
         p = subprocess.Popen(command, shell=shell, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
@@ -62,6 +64,7 @@ def excute_adb_process(cmd, serial=None):
     else:
         command = "adb {0}".format(cmd)
 
+    print("Excute_adb_process: " + command)
     ret = ""
     for i in range(0,3):
         p = subprocess.Popen(command, shell=True, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)

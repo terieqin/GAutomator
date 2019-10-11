@@ -17,7 +17,7 @@ import android.view.View;
 public class U3DAutomation {
 
 	private final static String TAG = "wetest";
-	protected static View mUnityPlayer = null;
+	protected static View mUnityPlayer = null; // ??? 为什么这个从来没有被赋值
 	protected static boolean handleForward = false;
 	protected static Class<?> unityPlayerClass = null;
 	protected static Field forward = null;
@@ -49,7 +49,7 @@ public class U3DAutomation {
 		}
 	}
 
-	static class InjectAction implements Runnable {
+	static class InjectAction implements Runnable { // Runnable 多线程接口
 
 		private MotionEvent event;
 		private View v = null;
@@ -92,13 +92,16 @@ public class U3DAutomation {
 		}
 	}
 
+	/**
+	 * 获取Unity版本，原理是Unity5的UnityPlayer类中不包含 k 字段（电话访问字段）
+	 * @return
+	 */
 	private static int getUnityVersion() {
 		try {
-
 			Field f = getDeclaredFieldNest(unityPlayerClass, "l");
 
 			if (f != null) {
-				f.setAccessible(true);
+				f.setAccessible(true); //  允许程序通过反射访问 f 代表的字段
 
 				if (f.getGenericType().equals(boolean.class)) {
 					return 4;
@@ -124,6 +127,10 @@ public class U3DAutomation {
 		return 0;
 	}
 
+	/**
+	 * 获取一个bool值
+	 * @return
+	 */
 	private static boolean getForward() {
 
 		try {
@@ -149,7 +156,7 @@ public class U3DAutomation {
 				forward.setAccessible(true);
 			}
 
-			return forward.getBoolean(mUnityPlayer);
+			return forward.getBoolean(mUnityPlayer); // ??? mUnityPlayer是View类，但是无论是k还是l都不是View类，为什么要传这个参数
 
 		} catch (NoSuchFieldException e) {
 			Log.e(TAG, "getForward", e);
@@ -163,6 +170,10 @@ public class U3DAutomation {
 
 	}
 
+	/**
+	 * 设置一个很奇怪的bool值
+	 * @param b
+	 */
 	private static void setForward(boolean b) {
 		try {
 			if (unity_version == 4) {
@@ -184,7 +195,7 @@ public class U3DAutomation {
 				if (nativeForwardEventsToDalvik == null) {
 					nativeForwardEventsToDalvik = unityPlayerClass
 							.getDeclaredMethod("nativeForwardEventsToDalvik",
-									boolean.class);
+									boolean.class);// ??? 这又是什么意思
 
 					if (nativeForwardEventsToDalvik == null) {
 						Log.e(TAG, "can't find nativeForwardEventsToDalvik!");
@@ -209,6 +220,13 @@ public class U3DAutomation {
 		}
 	}
 
+	/**
+	 * 在类cls中获取名为name的成员，如果找不到就试图往父类找，直到没有父类
+	 * @param cls
+	 * @param name
+	 * @return 返回名为name的成员
+	 * @throws NoSuchFieldException
+	 */
 	private static Field getDeclaredFieldNest(Class<?> cls, String name)
 			throws NoSuchFieldException {
 
@@ -229,13 +247,30 @@ public class U3DAutomation {
 		return getDeclaredFieldNest(supercls, name);
 	}
 
+	/**
+	 * 获取com.unity3d.player.UnityPlayer类（反射）
+	 * @return null
+	 */
 	private static Class<?> getUnityPlayerClass() {
 		if (unityPlayerClass != null) {
 			return unityPlayerClass;
 		}
 
 		try {
-			unityPlayerClass = Class.forName("com.unity3d.player.UnityPlayer");
+			/**
+			 * 通过Android Studio反汇编可以看到每个Unity打包后的APK都会包含一个com.unity3d.player包。里面就有一个名为UnityPlayer的java类。
+			 * 在这个类中，包含了名为从a-v的22个成员和一个名为currentActivity的成员
+			 * 本文件中，用到了其中的三个成员，为k，l，和currentActivity。
+			 * 定义如下：
+			 * 
+			 * android.telephony.TelephonyManager k
+			 * android.content.ClipboardManager l
+			 * android.app.Activity currentActivity
+			 * 
+			 * currentActivity不解释。其中TelephoneyManager是用来管理手机通话状态的，获取电话信息，侦听电话状态以及调用电话拨号器拨打电话，等等功能
+			 * ClipboardManager表示一个剪贴板
+			 */
+			unityPlayerClass = Class.forName("com.unity3d.player.UnityPlayer"); 
 			return unityPlayerClass;
 		} catch (ClassNotFoundException e) {
 			Log.e(TAG, "can't find com.unity3d.player.UnityPlayer");
@@ -248,22 +283,23 @@ public class U3DAutomation {
 	public static void InjectTouchEvent(int action, float x, float y) {
 		long now = SystemClock.uptimeMillis();
 
-		final float DEFAULT_SIZE = 1.0f;
-		final int DEFAULT_META_STATE = 0;
-		final float DEFAULT_PRECISION_X = 1.0f;
-		final float DEFAULT_PRECISION_Y = 1.0f;
-		final int DEFAULT_DEVICE_ID = 0;
-		final int DEFAULT_EDGE_FLAGS = 0;
+		final float DEFAULT_SIZE = 1.0f; // 按压下去的触发区域大小
+		final int DEFAULT_META_STATE = 0; // The state of any meta / modifier keys that were in effect when the event was generated
+		final float DEFAULT_PRECISION_X = 1.0f; // X坐标的精度
+		final float DEFAULT_PRECISION_Y = 1.0f; // Y坐标的精度
+		final int DEFAULT_DEVICE_ID = 0; // 说明这个事件来自哪个设备。0表示不来自物理设备
+		final int DEFAULT_EDGE_FLAGS = 0; // 位字段，表示触摸了哪些边
 
-		float pressure = (action == MotionEvent.ACTION_UP) ? 0.0f : 1.0f;
+		float pressure = (action == MotionEvent.ACTION_UP) ? 0.0f : 1.0f; // 只有Press和Down事件才有压力参数，压力从0-1
 
 		MotionEvent event = MotionEvent.obtain(now, now, action, x, y,
 				pressure, DEFAULT_SIZE, DEFAULT_META_STATE,
 				DEFAULT_PRECISION_X, DEFAULT_PRECISION_Y, DEFAULT_DEVICE_ID,
 				DEFAULT_EDGE_FLAGS);
 
+		// 获取系统的API级别
 		if (Build.VERSION.SDK_INT >= 12) {
-			event.setSource(InputDevice.SOURCE_TOUCHSCREEN);
+			event.setSource(InputDevice.SOURCE_TOUCHSCREEN); // 这个方法在API 12 以后才加入，也不知道干什么用的，官网也没讲，大概是设置事件的来源
 		}
 
 		View unityPlayer = (View)getUnityPlayerActivity();
@@ -278,10 +314,15 @@ public class U3DAutomation {
 				Log.i(TAG, "Unity version = " + unity_version);
 			}
 
-			unityPlayer.post(new InjectAction(event, unityPlayer));
+			unityPlayer.post(new InjectAction(event, unityPlayer)); // 开启一个线程去执行InjectAction类，InjectAction继承了Runnable接口
 		}
 	}
 
+	/**
+	 * 获取UnityActivity
+	 * 通过UnityPlayer类中的currentActivity获取
+	 * @return
+	 */
 	public static Activity GetPlayerActivity() {
 		if (playerActivity != null) {
 			return playerActivity;
@@ -318,6 +359,10 @@ public class U3DAutomation {
 		return playerActivity;
 	}
 
+	/**
+	 * 获取UnityActivity,同时做一些处理，比如成员忽略修饰符进行访问
+	 * @return
+	 */
 	private static Object getUnityPlayerActivity() {
 		Activity obj = (Activity) GetPlayerActivity();
 		if (obj == null) {
@@ -359,7 +404,10 @@ public class U3DAutomation {
 		return null;
 	}
 	
-	
+	/**
+	 * 从UnityPlayerActivity里面找一个surfaceView
+	 * @return
+	 */
 	private static SurfaceView getSurfaceView(){
 		if (surfaceView == null) {
 			Object activity = getUnityPlayerActivity();
